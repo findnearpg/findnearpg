@@ -43,7 +43,7 @@ async function usersCollection() {
           unique: true,
           partialFilterExpression: {
             role: 'user',
-            mobile: { $exists: true, $type: 'string', $ne: '' },
+            mobile: { $exists: true, $gt: '' },
           },
         }
       );

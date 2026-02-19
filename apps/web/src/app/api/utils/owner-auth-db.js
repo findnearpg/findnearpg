@@ -81,14 +81,14 @@ async function ownersCollection() {
         { mobile: 1 },
         {
           unique: true,
-          partialFilterExpression: { mobile: { $exists: true, $type: 'string', $ne: '' } },
+          partialFilterExpression: { mobile: { $exists: true, $gt: '' } },
         }
       );
       await collection.createIndex(
         { govtIdNumber: 1 },
         {
           unique: true,
-          partialFilterExpression: { govtIdNumber: { $exists: true, $type: 'string', $ne: '' } },
+          partialFilterExpression: { govtIdNumber: { $exists: true, $gt: '' } },
         }
       );
       await collection.createIndex({ createdAt: -1 });
