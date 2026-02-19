@@ -4,6 +4,9 @@ function getSmtpConfig() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
   const secure = String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true';
+  const connectionTimeout = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15000);
+  const greetingTimeout = Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000);
+  const socketTimeout = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 20000);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   const from = process.env.SMTP_FROM || user;
@@ -12,6 +15,9 @@ function getSmtpConfig() {
     host,
     port,
     secure,
+    connectionTimeout,
+    greetingTimeout,
+    socketTimeout,
     user,
     pass,
     from,
@@ -86,6 +92,11 @@ export async function sendOwnerSignupOtpEmail({ email, otp, ownerName }) {
       host: smtp.host,
       port: smtp.port,
       secure: smtp.secure,
+      // Port 587 should negotiate STARTTLS for reliable delivery on major providers.
+      requireTLS: !smtp.secure && smtp.port === 587,
+      connectionTimeout: smtp.connectionTimeout,
+      greetingTimeout: smtp.greetingTimeout,
+      socketTimeout: smtp.socketTimeout,
       auth: {
         user: smtp.user,
         pass: smtp.pass,
@@ -142,6 +153,10 @@ export async function sendUserSignupOtpEmail({ email, otp, userName }) {
       host: smtp.host,
       port: smtp.port,
       secure: smtp.secure,
+      requireTLS: !smtp.secure && smtp.port === 587,
+      connectionTimeout: smtp.connectionTimeout,
+      greetingTimeout: smtp.greetingTimeout,
+      socketTimeout: smtp.socketTimeout,
       auth: {
         user: smtp.user,
         pass: smtp.pass,
@@ -173,6 +188,10 @@ export async function sendOwnerPasswordResetOtpEmail({ email, otp, ownerName }) 
       host: smtp.host,
       port: smtp.port,
       secure: smtp.secure,
+      requireTLS: !smtp.secure && smtp.port === 587,
+      connectionTimeout: smtp.connectionTimeout,
+      greetingTimeout: smtp.greetingTimeout,
+      socketTimeout: smtp.socketTimeout,
       auth: {
         user: smtp.user,
         pass: smtp.pass,
@@ -204,6 +223,10 @@ export async function sendAdminSigninOtpEmail({ email, otp, adminName }) {
       host: smtp.host,
       port: smtp.port,
       secure: smtp.secure,
+      requireTLS: !smtp.secure && smtp.port === 587,
+      connectionTimeout: smtp.connectionTimeout,
+      greetingTimeout: smtp.greetingTimeout,
+      socketTimeout: smtp.socketTimeout,
       auth: {
         user: smtp.user,
         pass: smtp.pass,
