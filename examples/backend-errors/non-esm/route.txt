@@ -1,0 +1,10 @@
+const handleGetRequest = (req) => {
+  return Response.json({
+    message: 'Hello, world!',
+    requestMethod: req.method,
+    requestUrl: req.url,
+  });
+};
+module.exports = {
+  GET: handleGetRequest,
+};

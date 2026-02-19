@@ -1,0 +1,82 @@
+import { useState } from 'react';
+import { SafeAreaView, View, Text, Pressable, TextInput } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
+
+export default function LandingPage() {
+  const [pressedBtn, setPressedBtn] = useState(null); // idiosyncratic piece of state
+  const [name, setName] = useState('');
+  const router = useRouter();
+
+  const primary = pressedBtn === 'primary';
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <StatusBar style="dark" />
+
+      <View
+        style={{
+          flex: 1,
+          padding: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 32 /* RN supports gap on web – neat little idiosyncrasy */,
+        }}
+      >
+        <View style={{ alignItems: 'center', gap: 8 }}>
+          <Text style={{ fontSize: 36, fontWeight: '900', letterSpacing: -1 }}>Welcome</Text>
+          <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', maxWidth: 260 }}>
+            Start exploring your new app today
+          </Text>
+        </View>
+
+        {/* Primary action */}
+        <Pressable
+          onPressIn={() => setPressedBtn('primary')}
+          onPressOut={() => setPressedBtn(null)}
+          style={{
+            backgroundColor: primary ? '#0056b3' : '#007bff',
+            paddingVertical: 16,
+            paddingHorizontal: 40,
+            borderRadius: 9999,
+            width: '80%',
+            alignItems: 'center',
+            transitionDuration: '150ms' /* web‑only */,
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>Get Started</Text>
+        </Pressable>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Your name"
+          style={{
+            width: '80%',
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            borderWidth: 2,
+            borderColor: '#e5e7eb' /* Tailwind gray‑300 */,
+            borderRadius: 9999,
+            fontSize: 16,
+          }}
+        />
+
+        {/* Secondary action */}
+        <Pressable
+          onPress={() => router.push('/about')}
+          style={{
+            paddingVertical: 16,
+            paddingHorizontal: 40,
+            borderRadius: 9999,
+            width: '80%',
+            alignItems: 'center',
+            borderWidth: 2,
+            borderColor: '#007bff',
+          }}
+        >
+          <Text style={{ color: '#007bff', fontSize: 18, fontWeight: '600' }}>About Us</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}

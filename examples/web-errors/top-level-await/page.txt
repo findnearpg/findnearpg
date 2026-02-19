@@ -1,0 +1,4 @@
+const value = await Promise.resolve('top level awaited promise');
+export default function Page() {
+  return <div>CommonJS treated as ESM: {value}</div>;
+}

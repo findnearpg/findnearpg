@@ -1,0 +1,20 @@
+{
+  "name": "devserver-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "docker:up": "docker compose -f ../docker-compose.test.yml up devserver -d --build --wait",
+    "docker:down": "docker compose -f ../docker-compose.test.yml down",
+    "docker:test": "docker compose -f ../docker-compose.test.yml up devserver -d --build --wait && npm test; docker compose -f ../docker-compose.test.yml down",
+    "docker:test:full": "docker compose -f ../docker-compose.test.yml --profile test up --build --abort-on-container-exit --exit-code-from tests"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.1",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+const foo = await Promise.resolve('hello');
+
+export function GET(request) {
+  return Response.json({
+    foo: foo,
+    requestMethod: request.method,
+    requestUrl: request.url,
+  });
+}
