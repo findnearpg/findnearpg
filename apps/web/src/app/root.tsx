@@ -27,8 +27,6 @@ import './global.css';
 import { LoadFonts } from 'virtual:load-fonts.jsx';
 import fetch from '@/__create/fetch';
 import LoadingSpinner from '@/components/LoadingSpinner';
-// @ts-ignore
-import { SessionProvider } from '@auth/create/react';
 import { toPng } from 'html-to-image';
 import { useNavigate } from 'react-router';
 import { serializeError } from 'serialize-error';
@@ -572,9 +570,9 @@ export default function App() {
   const isNavigating = navigation.state !== 'idle';
 
   return (
-    <SessionProvider>
+    <>
       <Outlet />
       {isNavigating ? <LoadingSpinner fullScreen label="loading" /> : null}
-    </SessionProvider>
+    </>
   );
 }
