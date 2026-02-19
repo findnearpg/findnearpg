@@ -33,14 +33,12 @@ async function usersCollection() {
   if (!indexesReady && !indexesAttempted) {
     indexesAttempted = true;
     try {
+      await collection.createIndex({ role: 1, email: 1 }, { unique: true, name: 'uniq_user_role_email' });
       await collection.createIndex(
-        { email: 1, role: 1 },
-        { unique: true, partialFilterExpression: { role: 'user' } }
-      );
-      await collection.createIndex(
-        { mobile: 1, role: 1 },
+        { role: 1, mobile: 1 },
         {
           unique: true,
+          name: 'uniq_user_role_mobile_non_empty',
           partialFilterExpression: {
             role: 'user',
             mobile: { $exists: true, $gt: '' },
