@@ -47,10 +47,10 @@ export async function getSessionFromRequest(request) {
   const adminRoleFromCookie = normalizeRole(cookies.findnearpg_admin_role || '');
   const adminIdFromCookie = parseNumber(cookies.findnearpg_admin_user_id);
 
-  const canUseHeaderSession = roleFromHeader && roleFromHeader !== 'admin';
-  if (canUseHeaderSession || (idFromHeader && roleFromHeader && roleFromHeader !== 'admin')) {
+  const canUseHeaderSession = Boolean(roleFromHeader && idFromHeader && roleFromHeader !== 'admin');
+  if (canUseHeaderSession) {
     return {
-      role: roleFromHeader || 'user',
+      role: roleFromHeader,
       userId: idFromHeader,
       source: 'headers',
       token: null,
