@@ -63,11 +63,17 @@ async function createRecaptchaToken({ siteKey, action }) {
       : typeof grecaptcha?.execute === 'function'
         ? (key, options) => grecaptcha.execute(key, options)
         : null;
-  if (!execute || !grecaptcha?.ready) {
+  const ready =
+    typeof grecaptcha?.enterprise?.ready === 'function'
+      ? (cb) => grecaptcha.enterprise.ready(cb)
+      : typeof grecaptcha?.ready === 'function'
+        ? (cb) => grecaptcha.ready(cb)
+        : null;
+  if (!execute || !ready) {
     throw new Error('reCAPTCHA not available');
   }
   return new Promise((resolve, reject) => {
-    grecaptcha.ready(async () => {
+    ready(async () => {
       try {
         const token = await execute(siteKey, { action });
         resolve(String(token || ''));
