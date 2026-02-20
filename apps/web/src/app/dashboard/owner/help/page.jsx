@@ -18,8 +18,20 @@ export default function OwnerHelpPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, subject, message }),
       });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || 'Failed to send help request');
+      const raw = await response.text();
+      let json = {};
+      try {
+        json = raw ? JSON.parse(raw) : {};
+      } catch {
+        json = {};
+      }
+      if (!response.ok) {
+        const fallback =
+          raw && raw.trim().startsWith('<')
+            ? 'Temporary server/network issue. Please try again in a moment.'
+            : 'Failed to send help request';
+        throw new Error(json.error || fallback);
+      }
       return json;
     },
     onSuccess: () => {

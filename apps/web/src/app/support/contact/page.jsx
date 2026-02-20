@@ -53,8 +53,20 @@ export default function ContactSupportPage() {
           message: message.trim(),
         }),
       });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || 'Failed to submit support request');
+      const raw = await response.text();
+      let json = {};
+      try {
+        json = raw ? JSON.parse(raw) : {};
+      } catch {
+        json = {};
+      }
+      if (!response.ok) {
+        const fallback =
+          raw && raw.trim().startsWith('<')
+            ? 'Temporary server/network issue. Please try again in a moment.'
+            : 'Failed to submit support request';
+        throw new Error(json.error || fallback);
+      }
       return json;
     },
     onSuccess: () => {
