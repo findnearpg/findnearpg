@@ -24,7 +24,9 @@ let recaptchaScriptPromise = null;
 
 function loadRecaptcha(siteKey) {
   if (typeof window === 'undefined') return Promise.resolve(null);
-  if (window.grecaptcha?.execute) return Promise.resolve(window.grecaptcha);
+  if (window.grecaptcha?.enterprise?.execute || window.grecaptcha?.execute) {
+    return Promise.resolve(window.grecaptcha);
+  }
   if (recaptchaScriptPromise) return recaptchaScriptPromise;
 
   recaptchaScriptPromise = new Promise((resolve, reject) => {
@@ -38,7 +40,7 @@ function loadRecaptcha(siteKey) {
     }
 
     const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
     script.async = true;
     script.defer = true;
     script.dataset.recaptcha = 'google-v3';
@@ -55,13 +57,19 @@ async function createRecaptchaToken({ siteKey, action }) {
     throw new Error('reCAPTCHA site key missing');
   }
   const grecaptcha = await loadRecaptcha(siteKey);
-  if (!grecaptcha?.execute || !grecaptcha?.ready) {
+  const execute =
+    typeof grecaptcha?.enterprise?.execute === 'function'
+      ? (key, options) => grecaptcha.enterprise.execute(key, options)
+      : typeof grecaptcha?.execute === 'function'
+        ? (key, options) => grecaptcha.execute(key, options)
+        : null;
+  if (!execute || !grecaptcha?.ready) {
     throw new Error('reCAPTCHA not available');
   }
   return new Promise((resolve, reject) => {
     grecaptcha.ready(async () => {
       try {
-        const token = await grecaptcha.execute(siteKey, { action });
+        const token = await execute(siteKey, { action });
         resolve(String(token || ''));
       } catch {
         reject(new Error('reCAPTCHA verification failed'));
