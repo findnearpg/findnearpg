@@ -20,9 +20,60 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+let recaptchaScriptPromise = null;
+
+function loadRecaptcha(siteKey) {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (window.grecaptcha?.execute) return Promise.resolve(window.grecaptcha);
+  if (recaptchaScriptPromise) return recaptchaScriptPromise;
+
+  recaptchaScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-recaptcha="google-v3"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.grecaptcha || null), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load reCAPTCHA')), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.recaptcha = 'google-v3';
+    script.onload = () => resolve(window.grecaptcha || null);
+    script.onerror = () => reject(new Error('Failed to load reCAPTCHA'));
+    document.head.appendChild(script);
+  });
+
+  return recaptchaScriptPromise;
+}
+
+async function createRecaptchaToken({ siteKey, action }) {
+  if (!siteKey) {
+    throw new Error('reCAPTCHA site key missing');
+  }
+  const grecaptcha = await loadRecaptcha(siteKey);
+  if (!grecaptcha?.execute || !grecaptcha?.ready) {
+    throw new Error('reCAPTCHA not available');
+  }
+  return new Promise((resolve, reject) => {
+    grecaptcha.ready(async () => {
+      try {
+        const token = await grecaptcha.execute(siteKey, { action });
+        resolve(String(token || ''));
+      } catch {
+        reject(new Error('reCAPTCHA verification failed'));
+      }
+    });
+  });
+}
+
 export default function PropertyDetailPage({ params }) {
   const { slug } = params;
   const queryClient = useQueryClient();
+  const recaptchaSiteKey = String(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
   const [selectedRoomKey, setSelectedRoomKey] = useState('1');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
@@ -216,7 +267,7 @@ export default function PropertyDetailPage({ params }) {
     ? String(property.food_option).replace(/_/g, ' ')
     : 'Food info available on call';
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (!session?.authenticated) {
       toast.error('Please login or sign up as user before booking.');
       window.location.href = `/account/user/signin?next=${encodeURIComponent(`/pg/${slug}`)}`;
@@ -234,12 +285,25 @@ export default function PropertyDetailPage({ params }) {
       toast.error('No valid room option available');
       return;
     }
+
+    let recaptchaToken = '';
+    try {
+      recaptchaToken = await createRecaptchaToken({
+        siteKey: recaptchaSiteKey,
+        action: 'booking',
+      });
+    } catch (error) {
+      toast.error(error?.message || 'Security check failed. Please try again.');
+      return;
+    }
+
     bookingMutation.mutate({
       userId: Number(session?.userId),
       propertyId: property.id,
       roomType: selectedRoom.label,
       amount: selectedPrice,
       acceptedTerms: true,
+      recaptchaToken,
     });
   };
 
