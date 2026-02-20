@@ -108,8 +108,18 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-5 text-center text-[11px] text-white/50 sm:mt-6 sm:text-xs">
-          © {new Date().getFullYear()} FindNearPG. All rights reserved.
+        <div className="mt-5 flex flex-col items-center gap-2 text-center sm:mt-6">
+          <div className="text-[11px] text-white/50 sm:text-xs">
+            © {new Date().getFullYear()} FindNearPG. All rights reserved.
+          </div>
+          <a
+            href="https://www.softsitesolution.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center rounded-full border border-[#0f8f8b]/70 bg-[#0f8f8b]/15 px-4 py-1.5 text-xs font-semibold text-[#a7fffb] shadow-[0_0_20px_rgba(15,143,139,0.35)] transition-all duration-300 hover:scale-105 hover:bg-[#0f8f8b]/25 hover:text-white animate-pulse"
+          >
+            Developed by softsitesolutions
+          </a>
         </div>
       </div>
     </footer>
