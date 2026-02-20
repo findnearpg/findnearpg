@@ -22,41 +22,7 @@ import { toast } from 'sonner';
 
 let recaptchaScriptPromise = null;
 
-function loadRecaptcha(siteKey) {
-  if (typeof window === 'undefined') return Promise.resolve(null);
-  if (window.grecaptcha?.enterprise?.execute || window.grecaptcha?.execute) {
-    return Promise.resolve(window.grecaptcha);
-  }
-  if (recaptchaScriptPromise) return recaptchaScriptPromise;
-
-  recaptchaScriptPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-recaptcha="google-v3"]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.grecaptcha || null), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Failed to load reCAPTCHA')), {
-        once: true,
-      });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.recaptcha = 'google-v3';
-    script.onload = () => resolve(window.grecaptcha || null);
-    script.onerror = () => reject(new Error('Failed to load reCAPTCHA'));
-    document.head.appendChild(script);
-  });
-
-  return recaptchaScriptPromise;
-}
-
-async function createRecaptchaToken({ siteKey, action }) {
-  if (!siteKey) {
-    throw new Error('reCAPTCHA site key missing');
-  }
-  const grecaptcha = await loadRecaptcha(siteKey);
+function getRecaptchaApi(grecaptcha) {
   const execute =
     typeof grecaptcha?.enterprise?.execute === 'function'
       ? (key, options) => grecaptcha.enterprise.execute(key, options)
@@ -69,6 +35,68 @@ async function createRecaptchaToken({ siteKey, action }) {
       : typeof grecaptcha?.ready === 'function'
         ? (cb) => grecaptcha.ready(cb)
         : null;
+  return { execute, ready };
+}
+
+function waitForRecaptchaApi(timeoutMs = 6000) {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const tick = () => {
+      const { execute, ready } = getRecaptchaApi(window.grecaptcha);
+      if (execute && ready) {
+        resolve(window.grecaptcha);
+        return;
+      }
+      if (Date.now() - started >= timeoutMs) {
+        resolve(window.grecaptcha || null);
+        return;
+      }
+      setTimeout(tick, 120);
+    };
+    tick();
+  });
+}
+
+function loadRecaptcha(siteKey) {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  const existingApi = getRecaptchaApi(window.grecaptcha);
+  if (existingApi.execute && existingApi.ready) {
+    return Promise.resolve(window.grecaptcha);
+  }
+  if (recaptchaScriptPromise) return recaptchaScriptPromise;
+
+  recaptchaScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-recaptcha="google-v3"]');
+    if (existing) {
+      existing.addEventListener('load', async () => resolve(await waitForRecaptchaApi()), {
+        once: true,
+      });
+      existing.addEventListener('error', () => reject(new Error('Failed to load reCAPTCHA')), {
+        once: true,
+      });
+      waitForRecaptchaApi().then(resolve);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.recaptcha = 'google-v3';
+    script.onload = async () => resolve(await waitForRecaptchaApi());
+    script.onerror = () => reject(new Error('Failed to load reCAPTCHA'));
+    document.head.appendChild(script);
+  });
+
+  return recaptchaScriptPromise;
+}
+
+async function createRecaptchaToken({ siteKey, action }) {
+  if (!siteKey) {
+    throw new Error('reCAPTCHA site key missing');
+  }
+  const grecaptcha = await loadRecaptcha(siteKey);
+  const { execute, ready } = getRecaptchaApi(grecaptcha);
   if (!execute || !ready) {
     throw new Error('reCAPTCHA not available');
   }
