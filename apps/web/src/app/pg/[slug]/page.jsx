@@ -81,7 +81,11 @@ async function createRecaptchaToken({ siteKey, action }) {
 export default function PropertyDetailPage({ params }) {
   const { slug } = params;
   const queryClient = useQueryClient();
-  const recaptchaSiteKey = String(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '').trim();
+  const recaptchaSiteKey = String(
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+      import.meta.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+      ''
+  ).trim();
   const [selectedRoomKey, setSelectedRoomKey] = useState('1');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
